@@ -1,94 +1,153 @@
-# 🧠 DocMind — LangChain Document Q&A App
+# 📄 LangChain Document Q&A App
 
-A simple full-stack app that lets you paste any document and ask questions about it using LangChain's RAG (Retrieval-Augmented Generation) pipeline.
+> A fully **local, privacy-first** Retrieval-Augmented Generation (RAG) application that lets you paste any document and ask AI-powered questions — with **zero API keys** and zero cloud dependency.
 
-## Tech Stack
+![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square&logo=python)
+![LangChain](https://img.shields.io/badge/LangChain-1.x-green?style=flat-square)
+![Ollama](https://img.shields.io/badge/Ollama-Local%20LLM-orange?style=flat-square)
+![Flask](https://img.shields.io/badge/Flask-REST%20API-lightgrey?style=flat-square&logo=flask)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square&logo=docker)
 
-| Layer | Technology |
-|-------|-----------|
-| AI Framework | LangChain |
-| LLM | OpenAI GPT-3.5-turbo |
-| Embeddings | OpenAI text-embedding-ada-002 |
-| Vector Store | FAISS (in-memory) |
-| Backend | Flask (Python) |
-| Frontend | Vanilla HTML/CSS/JS |
+---
 
-## How It Works
+## 🚀 Features
+
+- **📝 Document Q&A** — Paste any text document and ask natural language questions
+- **🧠 RAG Pipeline** — LangChain's modern LCEL (LangChain Expression Language) chain
+- **⚡ FAISS Vector Store** — Fast in-memory semantic search over your documents
+- **🦙 Local LLM** — Powered by `llama3.2` via Ollama — runs entirely on your machine
+- **🔒 100% Private** — No data leaves your machine; no API keys required
+- **🐳 Docker Support** — One-command deployment via Docker Compose
+
+---
+
+## 🏗️ Architecture
 
 ```
-User Pastes Text
-      │
-      ▼
+User Input (Document + Question)
+        │
+        ▼
 Text Splitter (RecursiveCharacterTextSplitter)
-      │  chunks of 500 tokens, 50 overlap
-      ▼
-OpenAI Embeddings
-      │  converts each chunk to a vector
-      ▼
-FAISS Vector Store
-      │  stores all chunk vectors in memory
-      ▼
-User Asks Question
-      │
-      ▼
-Similarity Search (top 3 relevant chunks retrieved)
-      │
-      ▼
-RetrievalQA Chain (stuffs chunks into prompt)
-      │
-      ▼
-GPT-3.5-turbo generates answer
-      │
-      ▼
-Answer shown in chat UI
+        │
+        ▼
+FAISS Vector Store ◄─── nomic-embed-text (Ollama Embeddings)
+        │
+        ▼
+RAG Chain (LCEL) ◄─── llama3.2 (Ollama LLM)
+        │
+        ▼
+   Answer (Flask REST API → Frontend)
 ```
 
-## Setup
+| Component | Technology |
+|---|---|
+| LLM | `llama3.2` via Ollama |
+| Embeddings | `nomic-embed-text` via Ollama |
+| Vector Store | FAISS (in-memory) |
+| Backend | Flask REST API |
+| Chain Style | LCEL (LangChain 1.x) |
+| Containerization | Docker + Docker Compose |
 
-1. **Clone / download this project**
+---
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🛠️ Setup & Installation
 
-3. **Add your OpenAI API key**
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your key
-   ```
+### Prerequisites
+- [Python 3.10+](https://www.python.org/)
+- [Ollama](https://ollama.com/) installed and running locally
+- Required Ollama models pulled:
+  ```bash
+  ollama pull llama3.2
+  ollama pull nomic-embed-text
+  ```
 
-4. **Run the app**
-   ```bash
-   python app.py
-   ```
+### Option A: Run Locally
 
-5. **Open your browser** at `http://localhost:5000`
+```bash
+# 1. Clone the repository
+git clone https://github.com/maazjadoon/langchain-app.git
+cd langchain-app
 
-## Usage
+# 2. Create a virtual environment
+python -m venv venv
+venv\Scripts\activate      # Windows
+# source venv/bin/activate  # Linux/macOS
 
-1. Paste any text into the left panel (article, report, book chapter, etc.)
-2. Click **Index Document** — this embeds and stores your text
-3. Type a question in the chat box and press Enter
-4. Get an AI-powered answer based only on your document!
+# 3. Install dependencies
+pip install -r requirements.txt
 
-## Key LangChain Components Used
+# 4. Configure environment
+cp .env.example .env
+# Edit .env to set your Ollama base URL if needed
 
-- `RecursiveCharacterTextSplitter` — splits text into overlapping chunks
-- `OpenAIEmbeddings` — creates vector representations of text
-- `FAISS` — fast vector similarity search
-- `RetrievalQA` — the full RAG chain
-- `PromptTemplate` — custom prompt to keep answers grounded in context
-- `ChatOpenAI` — the LLM that generates final answers
+# 5. Run the app
+python app.py
+```
 
-## Project Structure
+Open your browser at `http://localhost:5000`
+
+### Option B: Run with Docker
+
+```bash
+docker compose up --build
+```
+
+---
+
+## ⚙️ Configuration (`.env`)
+
+```env
+OLLAMA_LLM_MODEL=llama3.2
+OLLAMA_EMBED_MODEL=nomic-embed-text
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/ingest` | Upload document text for indexing |
+| `POST` | `/ask` | Ask a question against the indexed document |
+| `GET` | `/health` | Health check |
+
+---
+
+## 🧠 How It Works
+
+1. **Ingest** — Your document is split into overlapping chunks using `RecursiveCharacterTextSplitter`
+2. **Embed** — Each chunk is converted to a vector using `nomic-embed-text` via Ollama
+3. **Store** — Vectors are stored in a FAISS in-memory index for fast similarity search
+4. **Query** — Your question is embedded and the most relevant chunks are retrieved
+5. **Generate** — `llama3.2` generates an answer strictly grounded in the retrieved context
+
+---
+
+## 📦 Project Structure
 
 ```
-langchain-qa/
-├── app.py              # Flask backend + LangChain logic
+langchain-app/
+├── app.py              # Flask app + RAG chain (LCEL)
+├── list_models.py      # Utility to list available Ollama models
 ├── templates/
-│   └── index.html      # Chat UI
+│   └── index.html      # Frontend UI
 ├── requirements.txt
-├── .env.example
-└── README.md
+├── Dockerfile
+├── docker-compose.yml
+└── .env.example
 ```
+
+---
+
+## 👤 Author
+
+**Muhammad Maaz Jadoon**
+- GitHub: [@maazjadoon](https://github.com/maazjadoon)
+- Email: mohazjadoon@gmail.com
+
+---
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
